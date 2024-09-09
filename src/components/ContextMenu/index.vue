@@ -1,0 +1,694 @@
+<!--
+ * Copyright ©
+ * #
+ * @author: zw
+ * @date: 2024-08-15
+ -->
+
+<template>
+  <transition name="contextmenu" @enter="onEnter" @after-enter="onAfterEnter" @leave="onLeave" @after-leave="onAfterLeave">
+    <div v-if="visible" :ref="containerRef" class="contextmenu">
+      <ContextMenuSub
+        :ref="listRef"
+        :id="id + '_list'"
+        class="contextmenu-root-list"
+        :root="true"
+        :tabindex="tabindex"
+        :menuId="id"
+        :focusedItemId="focused ? focusedItemIdx : undefined"
+        :items="processedItems"
+        :templates="$scopedSlots"
+        :activeItemPath="activeItemPath"
+        :level="0"
+        :visible="submenuVisible"
+        @item-click="onItemClick"
+        @item-mouseenter="onItemMouseEnter"
+        @item-mousemove="onItemMouseMove"
+        @focus.native="onFocus"
+        @blur.native="onBlur"
+        @keydown.native="onKeyDown"
+      >
+      </ContextMenuSub>
+    </div>
+  </transition>
+</template>
+
+<script>
+import { ZIndex, UniqueComponentId, isEmpty, isNotEmpty, isPrintableCharacter, resolve, findLastIndex, findSingle } from './helpper'
+import { focus, getHiddenElementOuterWidth, getHiddenElementOuterHeight, isTouchDevice, getViewport, addStyle } from './helpper'
+import ContextMenuSub from './ContextMenuSub'
+
+export default {
+  name: 'ContextMenu',
+  inheritAttrs: false,
+  components: { ContextMenuSub },
+  emits: ['focus', 'blur', 'show', 'hide', 'before-show', 'before-hide'],
+  props: {
+    model: { type: Array, default: null },
+    global: { type: Boolean, default: false },
+    appendToBody: { type: Boolean, default: true },
+    autoZIndex: { type: Boolean, default: true },
+    baseZIndex: { type: Number, default: 0 },
+    tabindex: { type: Number, default: 0 },
+  },
+
+  data() {
+    return {
+      target: null,
+      outsideClickListener: null,
+      resizeListener: null,
+      documentContextMenuListener: null,
+      pageX: null,
+      pageY: null,
+      container: null,
+      list: null,
+      id: this.$attrs.id,
+      focused: false,
+      focusedItemInfo: { index: -1, level: 0, parentKey: '' },
+      activeItemPath: [],
+      visible: false,
+      submenuVisible: false,
+    }
+  },
+
+  mounted() {
+    this.id = this.id || UniqueComponentId()
+
+    if (this.global) {
+      this.bindDocumentContextMenuListener()
+    }
+  },
+
+  methods: {
+    getItemLabel(item) {
+      return this.getItemProp(item, 'label')
+    },
+    isItemGroup(item) {
+      return isNotEmpty(this.getItemProp(item, 'items'))
+    },
+    getProccessedItemLabel(processedItem) {
+      return processedItem ? this.getItemLabel(processedItem.item) : undefined
+    },
+    toggle(event) {
+      this.visible ? this.hide() : this.show(event)
+    },
+    isItemMatched(processedItem) {
+      return this.isValidItem(processedItem) && this.getProccessedItemLabel(processedItem)?.toLocaleLowerCase().startsWith(this.searchValue.toLocaleLowerCase())
+    },
+    searchItems(event, char) {
+      this.searchValue = (this.searchValue || '') + char
+
+      let itemIndex = -1
+      let matched = false
+
+      if (this.focusedItemInfo.index !== -1) {
+        itemIndex = this.visibleItems.slice(this.focusedItemInfo.index).findIndex(processedItem => this.isItemMatched(processedItem))
+        itemIndex = itemIndex === -1 ? this.visibleItems.slice(0, this.focusedItemInfo.index).findIndex(processedItem => this.isItemMatched(processedItem)) : itemIndex + this.focusedItemInfo.index
+      } else {
+        itemIndex = this.visibleItems.findIndex(processedItem => this.isItemMatched(processedItem))
+      }
+
+      if (itemIndex !== -1) {
+        matched = true
+      }
+
+      if (itemIndex === -1 && this.focusedItemInfo.index === -1) {
+        itemIndex = this.findFirstFocusedItemIndex()
+      }
+
+      if (itemIndex !== -1) {
+        this.changeFocusedItemIndex(event, itemIndex)
+      }
+
+      if (this.searchTimeout) {
+        clearTimeout(this.searchTimeout)
+      }
+
+      this.searchTimeout = setTimeout(() => {
+        this.searchValue = ''
+        this.searchTimeout = null
+      }, 500)
+
+      return matched
+    },
+    containerRef(el) {
+      this.container = el
+    },
+    listRef(el) {
+      this.list = el ? el.$el : undefined
+    },
+    onEnter(el) {
+      this.position()
+
+      if (this.autoZIndex) {
+        ZIndex.set('menu', el, this.baseZIndex + 10000)
+      }
+    },
+    onAfterEnter() {
+      this.bindOutsideClickListener()
+      this.bindResizeListener()
+
+      this.$emit('show')
+      focus(this.list)
+    },
+    onLeave() {
+      this.$emit('hide')
+      this.container = null
+    },
+    onAfterLeave(el) {
+      if (this.autoZIndex) {
+        ZIndex.clear(el)
+      }
+
+      this.unbindOutsideClickListener()
+      this.unbindResizeListener()
+    },
+    bindDocumentContextMenuListener() {
+      if (!this.documentContextMenuListener) {
+        this.documentContextMenuListener = event => {
+          event.button === 2 && this.show(event)
+        }
+
+        document.addEventListener('contextmenu', this.documentContextMenuListener)
+      }
+    },
+    unbindDocumentContextMenuListener() {
+      if (this.documentContextMenuListener) {
+        document.removeEventListener('contextmenu', this.documentContextMenuListener)
+        this.documentContextMenuListener = null
+      }
+    },
+    bindOutsideClickListener() {
+      if (!this.outsideClickListener) {
+        this.outsideClickListener = event => {
+          const isOutsideContainer = this.container && !this.container.contains(event.target)
+          const isOutsideTarget = this.visible ? !(this.target && (this.target === event.target || this.target.contains(event.target))) : true
+
+          if (isOutsideContainer && isOutsideTarget) {
+            this.hide()
+          }
+        }
+
+        document.addEventListener('click', this.outsideClickListener)
+        document.addEventListener('contextmenu', this.outsideClickListener)
+      }
+    },
+    unbindOutsideClickListener() {
+      if (this.outsideClickListener) {
+        document.removeEventListener('click', this.outsideClickListener)
+        document.removeEventListener('contextmenu', this.outsideClickListener)
+        this.outsideClickListener = null
+      }
+    },
+    bindResizeListener() {
+      if (!this.resizeListener) {
+        this.resizeListener = () => {
+          if (this.visible && !isTouchDevice()) {
+            this.hide()
+          }
+        }
+
+        window.addEventListener('resize', this.resizeListener)
+      }
+    },
+    unbindResizeListener() {
+      if (this.resizeListener) {
+        window.removeEventListener('resize', this.resizeListener)
+        this.resizeListener = null
+      }
+    },
+    position() {
+      let left = this.pageX + 1
+      let top = this.pageY + 1
+
+      const viewport = getViewport()
+
+      addStyle(this.container, { position: 'absolute' })
+
+      const width = this.container.offsetParent ? this.container.offsetWidth : getHiddenElementOuterWidth(this.container)
+
+      const height = this.container.offsetParent ? this.container.offsetHeight : getHiddenElementOuterHeight(this.container)
+
+      addStyle(this.container, { position: 'fixed' })
+
+      // flip
+      if (left + width - document.body.scrollLeft > viewport.width) {
+        left -= width
+      }
+
+      // flip
+      if (top + height - document.body.scrollTop > viewport.height) {
+        top -= height
+      }
+
+      // fit
+      if (left < document.body.scrollLeft) {
+        left = document.body.scrollLeft
+      }
+
+      // fit
+      if (top < document.body.scrollTop) {
+        top = document.body.scrollTop
+      }
+
+      this.container.style.left = left + 'px'
+      this.container.style.top = top + 'px'
+    },
+    show(event) {
+      requestAnimationFrame(() => {
+        this.$emit('before-show')
+        this.activeItemPath = []
+        this.focusedItemInfo = { index: -1, level: 0, parentKey: '' }
+        focus(this.list)
+
+        this.pageX = event.pageX
+        this.pageY = event.pageY
+        this.visible ? this.position() : (this.visible = true)
+
+        if (this.appendToBody) {
+          document.body.appendChild(this.$el)
+        }
+      })
+      event.stopPropagation()
+      event.preventDefault()
+    },
+    hide() {
+      this.$emit('before-hide')
+      this.visible = false
+      this.activeItemPath = []
+      this.focusedItemInfo = { index: -1, level: 0, parentKey: '' }
+    },
+    onFocus(event) {
+      this.focused = true
+      this.focusedItemInfo = this.focusedItemInfo.index !== -1 ? this.focusedItemInfo : { index: -1, level: 0, parentKey: '' }
+      this.$emit('focus', event)
+    },
+    onBlur(event) {
+      this.focused = false
+      this.focusedItemInfo = { index: -1, level: 0, parentKey: '' }
+      this.searchValue = ''
+      this.$emit('blur', event)
+    },
+    onItemClick(event) {
+      const { processedItem } = event
+      const grouped = this.isProccessedItemGroup(processedItem)
+      const selected = this.isSelected(processedItem)
+
+      if (selected) {
+        const { index, key, level, parentKey } = processedItem
+
+        this.activeItemPath = this.activeItemPath.filter(p => key !== p.key && key.startsWith(p.key))
+        this.focusedItemInfo = { index, level, parentKey }
+
+        focus(this.list)
+      } else {
+        grouped ? this.onItemChange(event) : this.hide()
+        !processedItem.items?.length && this.$emit('on-select', processedItem.item, event.originalEvent)
+      }
+    },
+    onItemChange(event) {
+      const { processedItem, isFocus } = event
+
+      if (isEmpty(processedItem)) return
+
+      const { index, key, level, parentKey, items } = processedItem
+      const grouped = isNotEmpty(items)
+      const activeItemPath = this.activeItemPath.filter(p => p.parentKey !== parentKey && p.parentKey !== key)
+
+      if (grouped) {
+        activeItemPath.push(processedItem)
+        this.submenuVisible = true
+      }
+
+      this.focusedItemInfo = { index, level, parentKey }
+      this.activeItemPath = activeItemPath
+
+      isFocus && focus(this.list)
+    },
+    onItemMouseEnter(event) {
+      this.onItemChange(event)
+    },
+    onItemMouseMove(event) {
+      if (this.focused) {
+        this.changeFocusedItemIndex(event, event.processedItem.index)
+      }
+    },
+    onKeyDown(event) {
+      const metaKey = event.metaKey || event.ctrlKey
+
+      switch (event.code) {
+        case 'ArrowDown':
+          this.onArrowDownKey(event)
+          event.preventDefault()
+
+          break
+
+        case 'ArrowUp':
+          this.onArrowUpKey(event)
+          event.preventDefault()
+
+          break
+
+        case 'ArrowLeft':
+          this.onArrowLeftKey(event)
+          event.preventDefault()
+
+          break
+
+        case 'ArrowRight':
+          this.onArrowRightKey(event)
+          event.preventDefault()
+
+          break
+
+        case 'Home':
+          this.onHomeKey(event)
+          event.preventDefault()
+
+          break
+
+        case 'End':
+          this.onEndKey(event)
+          event.preventDefault()
+
+          break
+
+        case 'Space':
+          this.onSpaceKey(event)
+          event.preventDefault()
+
+          break
+
+        case 'Enter':
+        case 'NumpadEnter':
+          this.onEnterKey(event)
+          event.preventDefault()
+
+          break
+
+        case 'Escape':
+          this.onEscapeKey(event)
+          event.preventDefault()
+
+          break
+
+        case 'Tab':
+          this.onTabKey(event)
+          event.preventDefault()
+
+          break
+
+        case 'PageDown':
+        case 'PageUp':
+        case 'Backspace':
+        case 'ShiftLeft':
+        case 'ShiftRight':
+          // NOOP
+          break
+
+        default:
+          if (!metaKey && isPrintableCharacter(event.key)) {
+            this.searchItems(event, event.key)
+          }
+
+          break
+      }
+    },
+    onArrowDownKey(event) {
+      const itemIndex = this.focusedItemInfo.index !== -1 ? this.findNextItemIndex(this.focusedItemInfo.index) : this.findFirstFocusedItemIndex()
+
+      this.changeFocusedItemIndex(event, itemIndex)
+    },
+    onArrowUpKey(event) {
+      if (event.altKey) {
+        if (this.focusedItemInfo.index !== -1) {
+          const processedItem = this.visibleItems[this.focusedItemInfo.index]
+          const grouped = this.isProccessedItemGroup(processedItem)
+
+          !grouped && this.onItemChange({ originalEvent: event, processedItem })
+        }
+
+        this.popup && this.hide()
+      } else {
+        const itemIndex = this.focusedItemInfo.index !== -1 ? this.findPrevItemIndex(this.focusedItemInfo.index) : this.findLastFocusedItemIndex()
+
+        this.changeFocusedItemIndex(event, itemIndex)
+      }
+    },
+    onArrowLeftKey(event) {
+      const processedItem = this.visibleItems[this.focusedItemInfo.index]
+      const parentItem = this.activeItemPath.find(p => p.key === processedItem.parentKey)
+      const root = isEmpty(processedItem.parent)
+
+      if (!root) {
+        this.focusedItemInfo = { index: -1, parentKey: parentItem ? parentItem.parentKey : '' }
+        this.searchValue = ''
+        this.onArrowDownKey(event)
+      }
+
+      this.activeItemPath = this.activeItemPath.filter(p => p.parentKey !== this.focusedItemInfo.parentKey)
+    },
+    onArrowRightKey(event) {
+      const processedItem = this.visibleItems[this.focusedItemInfo.index]
+      const grouped = this.isProccessedItemGroup(processedItem)
+
+      if (grouped) {
+        this.onItemChange({ originalEvent: event, processedItem })
+        this.focusedItemInfo = { index: -1, parentKey: processedItem.key }
+        this.searchValue = ''
+        this.onArrowDownKey(event)
+      }
+    },
+    onHomeKey(event) {
+      this.changeFocusedItemIndex(event, this.findFirstItemIndex())
+    },
+    onEndKey(event) {
+      this.changeFocusedItemIndex(event, this.findLastItemIndex())
+    },
+    onSpaceKey(event) {
+      this.onEnterKey(event)
+    },
+    onEnterKey(event) {
+      if (this.focusedItemInfo.index !== -1) {
+        const element = findSingle(this.list, `li[id="${`${this.focusedItemIdx}`}"]`)
+        const anchorElement = element && findSingle(element, '[data-section="itemlink"]')
+
+        anchorElement ? anchorElement.click() : element && element.click()
+        const processedItem = this.visibleItems[this.focusedItemInfo.index]
+        const grouped = this.isProccessedItemGroup(processedItem)
+
+        !grouped && (this.focusedItemInfo.index = this.findFirstFocusedItemIndex())
+      }
+    },
+    onEscapeKey(event) {
+      this.hide()
+      !this.popup && (this.focusedItemInfo.index = this.findFirstFocusedItemIndex())
+    },
+    onTabKey(event) {
+      let itemIndex = this.focusedItemInfo.index !== -1 ? this.findNextItemIndex(this.focusedItemInfo.index) : this.findFirstFocusedItemIndex()
+      const processedItem = this.visibleItems[itemIndex]
+      const grouped = this.isProccessedItemGroup(processedItem)
+
+      if (this.activeItemPath.length) {
+        const lastIndex = this.activeItemPath[0].items.length - 1
+        const { parentKey, index: _index, level: _level = 0 } = this.focusedItemInfo
+
+        if (parentKey && _index >= lastIndex) {
+          this.focusedItemInfo = { parentKey: '', index: +parentKey + 1, level: Math.max(_level - 1, 0) }
+          itemIndex = this.focusedItemInfo.index
+          this.activeItemPath = []
+        }
+      }
+
+      if (grouped) {
+        this.onItemChange({ originalEvent: event, processedItem })
+        this.focusedItemInfo = { index: -1, parentKey: processedItem.key }
+        this.onArrowDownKey(event)
+
+        return
+      }
+
+      this.changeFocusedItemIndex(event, itemIndex)
+    },
+    // @TODO: Add more methods
+    findNextItemIndex(index) {
+      const matchedItemIndex = index < this.visibleItems.length - 1 ? this.visibleItems.slice(index + 1).findIndex(processedItem => this.isValidItem(processedItem)) : -1
+
+      return matchedItemIndex > -1 ? matchedItemIndex + index + 1 : index
+    },
+    findFirstFocusedItemIndex() {
+      const selectedIndex = this.findSelectedItemIndex()
+
+      return selectedIndex < 0 ? this.findFirstItemIndex() : selectedIndex
+    },
+    findFirstItemIndex() {
+      return this.visibleItems.findIndex(processedItem => this.isValidItem(processedItem))
+    },
+    findSelectedItemIndex() {
+      return this.visibleItems.findIndex(processedItem => this.isValidSelectedItem(processedItem))
+    },
+    findPrevItemIndex(index) {
+      const matchedItemIndex = index > 0 ? findLastIndex(this.visibleItems.slice(0, index), processedItem => this.isValidItem(processedItem)) : -1
+
+      return matchedItemIndex > -1 ? matchedItemIndex : index
+    },
+    findLastFocusedItemIndex() {
+      const selectedIndex = this.findSelectedItemIndex()
+
+      return selectedIndex < 0 ? this.findLastItemIndex() : selectedIndex
+    },
+    findLastItemIndex() {
+      return findLastIndex(this.visibleItems, processedItem => this.isValidItem(processedItem))
+    },
+    isValidSelectedItem(processedItem) {
+      return this.isValidItem(processedItem) && this.isSelected(processedItem)
+    },
+    isValidItem(processedItem) {
+      return !!processedItem && !this.isItemDisabled(processedItem.item) && !this.isItemSeparator(processedItem.item) && this.isItemVisible(processedItem.item)
+    },
+    isSelected(processedItem) {
+      return this.activeItemPath.some(p => p.key === processedItem.key)
+    },
+    isItemDisabled(item) {
+      return this.getItemProp(item, 'disabled')
+    },
+    isItemSeparator(item) {
+      return this.getItemProp(item, 'separator')
+    },
+    isItemVisible(item) {
+      return this.getItemProp(item, 'visible') !== false
+    },
+    getItemProp(item, name) {
+      return item ? resolve(item[name]) : undefined
+    },
+    isProccessedItemGroup(processedItem) {
+      return processedItem && isNotEmpty(processedItem.items)
+    },
+    changeFocusedItemIndex(_event, index) {
+      if (this.focusedItemInfo.index !== index) {
+        this.focusedItemInfo.index = index
+        this.scrollInView()
+      }
+    },
+    scrollInView(index = -1) {
+      const id = index !== -1 ? `${this.id}_${index}` : this.focusedItemIdx
+      const element = findSingle(this.list, `li[id="${id}"]`)
+
+      if (element) {
+        element.scrollIntoView && element.scrollIntoView({ block: 'nearest', inline: 'start' })
+      }
+    },
+    createProcessedItems(items, level = 0, parent = {}, parentKey = '') {
+      const processedItems = []
+
+      items &&
+        items.forEach((item, index) => {
+          const key = (parentKey !== '' ? parentKey + '_' : '') + index
+          const newItem = {
+            item,
+            index,
+            level,
+            key,
+            parent,
+            parentKey,
+          }
+
+          newItem['items'] = this.createProcessedItems(item.items, level + 1, newItem, key)
+          processedItems.push(newItem)
+        })
+
+      return processedItems
+    },
+  },
+  computed: {
+    processedItems() {
+      return this.createProcessedItems(this.model || [])
+    },
+    visibleItems() {
+      const processedItem = this.activeItemPath.find(p => p.key === this.focusedItemInfo.parentKey)
+
+      return processedItem ? processedItem.items : this.processedItems
+    },
+    focusedItemIdx() {
+      return this.focusedItemInfo.index !== -1 ? `${this.id}${isNotEmpty(this.focusedItemInfo.parentKey) ? '_' + this.focusedItemInfo.parentKey : ''}_${this.focusedItemInfo.index}` : null
+    },
+  },
+  watch: {
+    '$attrs.id'(newValue) {
+      this.id = newValue || UniqueComponentId()
+    },
+    activeItemPath(newPath) {
+      if (isNotEmpty(newPath)) {
+        this.bindOutsideClickListener()
+        this.bindResizeListener()
+      } else if (!this.visible) {
+        this.unbindOutsideClickListener()
+        this.unbindResizeListener()
+      }
+    },
+  },
+  beforeDestroy() {
+    this.unbindResizeListener()
+    this.unbindOutsideClickListener()
+    this.unbindDocumentContextMenuListener()
+
+    if (this.container && this.autoZIndex) {
+      ZIndex.clear(this.container)
+    }
+
+    this.target = null
+    this.container = null
+
+    if (this.appendToBody && this.$el && this.$el.parentNode) {
+      this.$el.parentNode.removeChild(this.$el)
+    }
+  },
+  //  End
+}
+</script>
+
+<style lang="scss" scoped>
+.contextmenu {
+  background: #fff;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow:
+    0px 6px 8px 0px rgba(0, 0, 0, 0.1),
+    1px 4px 6px -1px rgba(0, 0, 0, 0.1),
+    1px 2px 4px -2px rgba(0, 0, 0, 0.1);
+  min-width: 175px;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  font-family:
+    Inter var,
+    -apple-system,
+    BlinkMacSystemFont,
+    Segoe UI,
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif,
+    Apple Color Emoji,
+    Segoe UI Emoji,
+    Segoe UI Symbol;
+}
+
+.contextmenu-root-list {
+  margin: 0;
+  padding: 3.5px;
+  list-style: none;
+  outline: 0 none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.contextmenu-enter-from,
+.contextmenu-leave-active {
+  opacity: 0;
+}
+
+.contextmenu-enter-active {
+  transition: opacity 250ms;
+}
+</style>

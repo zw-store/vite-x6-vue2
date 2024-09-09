@@ -1,0 +1,7 @@
+{
+  "editor.codeActionsOnSave": {
+    "source": "always", // 总是运行代码操作
+    "source.fixAll.eslint": "always" // 运行所有ESLint代码操作
+  },
+  "regex-previewer.enableCodeLens": false // /(?<=<)\w+-\w+(?=\s\/>)?/
+}
