@@ -97,7 +97,9 @@ export function initGraph(opts) {
           const data = node.getData()
           if (data && data.parent) {
             const targetBBox = node.getBBox()
-            return bbox.isIntersectWithRect(targetBBox)
+            const pass = bbox.isIntersectWithRect(targetBBox)
+            pass && node.toFront()
+            return pass
           }
           return false
         })
