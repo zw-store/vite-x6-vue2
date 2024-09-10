@@ -30,7 +30,7 @@
                 <template v-if="getItemProp(processedItem, 'items')">
                   <component v-if="templates.submenuicon" :is="templates.submenuicon" :active="isItemActive(processedItem)" class="contextmenu-submenu-icon" />
 
-                  <svg-icon v-else icon-class="angle-right" style="margin-left: auto; font-size: 14px" />
+                  <svg-icon v-else icon-class="angle-right" style="margin-left: auto; font-size: 14px; color: #909399" />
                 </template>
               </a>
             </template>
