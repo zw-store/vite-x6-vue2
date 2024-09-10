@@ -6,10 +6,11 @@ import { Channel } from '../utils/transmit'
 export default graph => {
   graph.on('cell:selected', ({ cell }) => {
     let removeBtnConf
-    const editorConf = { x: '100%', y: 25, offset: { x: 10, y: -20 } }
+    let editBtnConf
     if (cell.isEdge()) {
       cell.attr('line', { stroke: 'skyblue', strokeWidth: 3 })
       removeBtnConf = { distance: '30%' }
+      editBtnConf = { distance: '30%', offset: { x: -30 } }
     }
 
     if (cell.isNode()) {
@@ -17,6 +18,7 @@ export default graph => {
       cellView.addClass(`${cell.shape}-selected`)
       // https://x6.antv.vision/zh/docs/api/registry/node-tool#button-remove
       removeBtnConf = { x: '100%', y: 0, offset: { x: 10, y: -20 } }
+      editBtnConf = { x: '100%', y: 25, offset: { x: 10, y: -20 } }
     }
 
     Channel.dispatch(CELL_CLICK, SELECTED)
@@ -30,7 +32,7 @@ export default graph => {
     } else {
       cell.addTools([
         { name: REMOVE_BUTTON, args: removeBtnConf }, // x6默认提供 button-remove, icon比较小, 交互体验不友好
-        { name: PROPERTIES_BUTTON, args: editorConf },
+        { name: PROPERTIES_BUTTON, args: editBtnConf },
       ])
     }
   })

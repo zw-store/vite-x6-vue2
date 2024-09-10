@@ -1,4 +1,6 @@
 import { NodeTool } from '@antv/x6/es/registry'
+import { NODE_CLICK } from '../types/enum_base_event'
+import { Channel } from '../utils/transmit'
 
 const Button = NodeTool.presets.button
 
@@ -6,6 +8,7 @@ export default options =>
   Button.define({
     markup: [
       {
+        zIndex: 1000,
         tagName: 'rect',
         selector: 'button',
         attrs: {
@@ -13,8 +16,8 @@ export default options =>
           height: options?.width || 20,
           rx: '50%',
           ry: '50%',
-          fill: '#ff4d4f',
-          stroke: '#ff4d4f',
+          fill: '#67C23A',
+          stroke: '#67C23A',
           cursor: 'pointer',
         },
       },
@@ -28,8 +31,8 @@ export default options =>
           textAnchor: 'middle',
           pointerEvents: 'none',
           cursor: 'pointer',
-          href: '#icon-delete',
-          'xlink:href': '#icon-delete',
+          href: '#icon-edit-large',
+          'xlink:href': '#icon-edit-large',
           x: 4,
           y: 4,
         },
@@ -37,8 +40,7 @@ export default options =>
     ],
     onClick({ view }) {
       const node = view.cell
-      // 删除前移除所有包含工具
       node.removeTools()
-      node.remove()
+      Channel.dispatch(NODE_CLICK, node)
     },
   })
