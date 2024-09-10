@@ -132,15 +132,15 @@ export function toJSON(graph) {
       const json = cell.toJSON()
 
       if (cell.isEdge()) {
-        edgesJSON.push(json)
-        edges.push(JSON.stringify(json))
+        edgesJSON.push(JSON.stringify(json))
+        edges.push(json)
       }
 
       if (cell.isNode()) {
         // 把省略符号去掉
         // json.attrs.label.text = json.data?.tooltip || ''
-        nodesJSON.push(json)
-        nodes.push(JSON.stringify(json))
+        nodesJSON.push(JSON.stringify(json))
+        nodes.push(json)
       }
     }
   }

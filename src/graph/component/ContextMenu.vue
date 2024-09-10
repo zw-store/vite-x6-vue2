@@ -12,6 +12,7 @@
 <script>
 import ContextMenu from '@/components/ContextMenu'
 import { Channel } from '../utils/transmit'
+import { downloadJSON } from '../utils/download'
 import { GraphContextMenuConfig, NodeContextmMenuConfig, ComboContextmMenuConfig } from '../types/emun_contentmenu_dispatch'
 import { SWITCH_CONTEXTMENU_TYPE, NODE_CONTEXTMENU, COMBO_CONTEXTMENU } from '../types/emun_contentmenu_dispatch'
 import { NODE_CLICK } from '../types/enum_base_event'
@@ -118,7 +119,7 @@ export default {
         case '导出':
           {
             const data = exportData()
-            console.log(data)
+            downloadJSON({ edges: data.edges, nodes: data.nodes })
           }
           break
 
