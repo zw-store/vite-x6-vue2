@@ -125,6 +125,7 @@ export const ComboContextmMenuConfig = [
   { label: '置顶', icon: 'arrow-top' },
   { label: '置底', icon: 'arrow-bottom' },
   { separator: true },
+  { label: '解散容器', icon: 'dissolve' },
   { label: '删除', icon: 'delete', shortcut: `${ctrl}⌫` },
   { separator: true },
   { label: '居中此容器', icon: 'fit-view' },
