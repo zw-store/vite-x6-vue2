@@ -9,6 +9,9 @@ const { IS_MAC } = Platform
 /** @type {String} node 右键 */
 export const NODE_CONTEXTMENU = '__node_contextmenu_event__'
 
+/** @type {String} 组/容器/combo 右键 */
+export const COMBO_CONTEXTMENU = '__combo_contextmenu_event__'
+
 /** @type {String} edge 右键 */
 export const EDGE_CONTEXTMENU = '__edge_contextmenu_event__'
 
@@ -95,9 +98,36 @@ export const NodeContextmMenuConfig = [
   { label: '复制', icon: 'copy', shortcut: `${ctrl}C` },
   { label: '编辑', icon: 'edit' },
   { separator: true },
+  { label: '置顶', icon: 'arrow-top' },
+  { label: '置底', icon: 'arrow-bottom' },
+  { separator: true },
   { label: '删除', icon: 'delete', shortcut: `${ctrl}⌫` },
   { separator: true },
   { label: '居中此节点', icon: 'fit-view' },
+  {
+    label: '缩放',
+    icon: 'zoom-in',
+    items: [
+      { label: '放大', icon: 'zoom-in', shortcut: '⇧+' },
+      { label: '缩小', icon: 'zoom-out', shortcut: '⇧-' },
+    ],
+  },
+  { separator: true },
+  { label: 'Add', icon: 'search', shortcut: `${ctrl}A` },
+  { label: '导出', icon: 'export', shortcut: `${ctrl}P` },
+]
+
+export const ComboContextmMenuConfig = [
+  { label: '选中', icon: 'select' },
+  { label: '复制', icon: 'copy', shortcut: `${ctrl}C` },
+  { label: '编辑', icon: 'edit' },
+  { separator: true },
+  { label: '置顶', icon: 'arrow-top' },
+  { label: '置底', icon: 'arrow-bottom' },
+  { separator: true },
+  { label: '删除', icon: 'delete', shortcut: `${ctrl}⌫` },
+  { separator: true },
+  { label: '居中此容器', icon: 'fit-view' },
   {
     label: '缩放',
     icon: 'zoom-in',

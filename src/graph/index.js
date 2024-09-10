@@ -3,7 +3,7 @@ import registerEvent from './events'
 import { miniMapPlugin, plugins, stencilPlugin } from './plugin'
 import registerNode from './shape'
 import { useGraph } from './store'
-import { GRAPH_CONTEXTMENU, HIDE_CONTEXTMENU, NODE_CONTEXTMENU } from './types/emun_contentmenu_dispatch'
+import { COMBO_CONTEXTMENU, GRAPH_CONTEXTMENU, HIDE_CONTEXTMENU, NODE_CONTEXTMENU } from './types/emun_contentmenu_dispatch'
 import { isVueComponent, verifyElementParams } from './utils/legacy'
 import { Channel } from './utils/transmit'
 
@@ -93,13 +93,12 @@ export function initGraph(opts) {
       findParent({ node }) {
         const bbox = node.getBBox()
 
-        return this.getNodes().filter(node => {
-          const data = node.getData()
+        return this.getNodes().filter(_node => {
+          const data = _node.getData()
           if (data && data.parent) {
-            const targetBBox = node.getBBox()
-            const pass = bbox.isIntersectWithRect(targetBBox)
-            pass && node.toFront()
-            return pass
+            const targetBBox = _node.getBBox()
+            _node.getChildren()?.forEach(child => child.toFront()) // 拖拽 combo 时，保持子元素置顶
+            return bbox.isIntersectWithRect(targetBBox)
           }
           return false
         })
@@ -157,6 +156,7 @@ export function initGraph(opts) {
 
   if (isVueComponent(_option.contextmenu)) {
     Channel.listener(NODE_CONTEXTMENU, _option.contextmenu.show)
+    Channel.listener(COMBO_CONTEXTMENU, _option.contextmenu.show)
     Channel.listener(GRAPH_CONTEXTMENU, _option.contextmenu.show)
     Channel.listener(HIDE_CONTEXTMENU, _option.contextmenu.hide)
   }

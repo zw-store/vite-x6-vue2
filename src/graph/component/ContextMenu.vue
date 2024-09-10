@@ -12,7 +12,8 @@
 <script>
 import ContextMenu from '@/components/ContextMenu'
 import { Channel } from '../utils/transmit'
-import { GraphContextMenuConfig, NodeContextmMenuConfig, SWITCH_CONTEXTMENU_TYPE, NODE_CONTEXTMENU } from '../types/emun_contentmenu_dispatch'
+import { GraphContextMenuConfig, NodeContextmMenuConfig, ComboContextmMenuConfig } from '../types/emun_contentmenu_dispatch'
+import { SWITCH_CONTEXTMENU_TYPE, NODE_CONTEXTMENU, COMBO_CONTEXTMENU } from '../types/emun_contentmenu_dispatch'
 import { NODE_CLICK } from '../types/enum_base_event'
 import { useGraph } from '../store'
 import { exportData } from '../functions'
@@ -25,6 +26,7 @@ export default {
   data() {
     return {
       contentmenuSelect: null,
+      contentmenuType: undefined,
       items: [],
     }
   },
@@ -32,6 +34,7 @@ export default {
   mounted() {
     Channel.listener(SWITCH_CONTEXTMENU_TYPE, this.switchData)
     Channel.listener(NODE_CONTEXTMENU, (_, node) => (this.contentmenuSelect = node))
+    Channel.listener(COMBO_CONTEXTMENU, (_, node) => (this.contentmenuSelect = node))
   },
 
   methods: {
@@ -51,6 +54,18 @@ export default {
         case '复制':
           graph.value.select(node)
           graph.value.copy([node])
+          break
+
+        case '置顶':
+          node.toFront({
+            eventSource: this.contentmenuType,
+          })
+          break
+
+        case '置底':
+          node.toBack({
+            eventSource: this.contentmenuType,
+          })
           break
 
         case '粘贴':
@@ -103,6 +118,7 @@ export default {
         case '导出':
           {
             const data = exportData()
+            console.log(data)
           }
           break
 
@@ -122,6 +138,8 @@ export default {
     },
 
     switchData(type) {
+      this.contentmenuType = type
+
       switch (type) {
         case 'graph':
           this.items = GraphContextMenuConfig
@@ -129,6 +147,10 @@ export default {
 
         case 'node':
           this.items = NodeContextmMenuConfig
+          break
+
+        case 'combo':
+          this.items = ComboContextmMenuConfig
           break
 
         default:
