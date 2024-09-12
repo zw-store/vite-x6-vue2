@@ -73,3 +73,20 @@ export function getOverrideOriginKeys(cellA, cellB) {
     .filter(key => cellB[key])
     .reduce((acc, prev) => ((acc[prev] = cellA[prev]), acc), {})
 }
+
+/**
+ * @name 用于字符改属性
+ * @desc 将 'attrs/text/text' 改为 { attrs: { text: { fill: `${value}` } } }
+ */
+export function transformInput(input, value) {
+  const parts = input.split('/')
+  const result = {}
+  let current = result
+
+  for (let i = 0; i < parts.length; i++) {
+    current[parts[i]] = i === parts.length - 1 ? value : {}
+    current = current[parts[i]]
+  }
+
+  return result
+}

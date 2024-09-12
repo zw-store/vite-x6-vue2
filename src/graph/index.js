@@ -1,11 +1,12 @@
-import { Graph, Shape } from '@antv/x6'
+import { Graph } from '@antv/x6'
 import registerEvent from './events'
 import { miniMapPlugin, plugins, stencilPlugin } from './plugin'
+import guidesPlugin from './plugin/guides'
 import registerNode from './shape'
+import registerEdge from './edge'
 import { useGraph } from './store'
-import { COMBO_CONTEXTMENU, GRAPH_CONTEXTMENU, HIDE_CONTEXTMENU, NODE_CONTEXTMENU } from './types/emun_contentmenu_dispatch'
-import { isVueComponent, verifyElementParams } from './utils/legacy'
-import { Channel } from './utils/transmit'
+import { isHTMLElement, verifyElementParams } from './utils/legacy'
+import { opacity } from '@antv/x6/lib/registry/highlighter/opacity'
 
 export function initGraph(opts) {
   const _option = verifyElementParams(opts)
@@ -13,6 +14,8 @@ export function initGraph(opts) {
   const graph = new Graph({
     container: _option.el,
     autoResize: true,
+    preventDefaultContextMenu: true,
+    preventDefaultBlankAction: false,
     // https://x6.antv.antgroup.com/api/graph/grid
     grid: {
       size: 10, // 网格大小 10px
@@ -51,8 +54,9 @@ export function initGraph(opts) {
         args: {
           padding: 4,
           attrs: {
-            'stroke-width': 4,
-            stroke: 'skyblue',
+            fill: '#fff',
+            stroke: '#A4DEB1',
+            strokeWidth: 4,
           },
         },
       },
@@ -62,8 +66,8 @@ export function initGraph(opts) {
         args: {
           padding: 4,
           attrs: {
-            'stroke-width': 8,
-            stroke: 'skyblue',
+            stroke: '#31d0c6',
+            strokeWidth: 4,
           },
         },
       },
@@ -104,8 +108,6 @@ export function initGraph(opts) {
         })
       },
     },
-    preventDefaultContextMenu: true,
-    preventDefaultBlankAction: false,
     mousewheel: {
       enabled: true,
       zoomAtMousePosition: true,
@@ -113,56 +115,86 @@ export function initGraph(opts) {
       minScale: 0.5,
       maxScale: 3,
     },
+    // https://x6.antv.antgroup.com/api/registry/connector
     connecting: {
-      router: 'orth',
+      // 路由 router 将对 vertices 进一步处理，并在必要时添加额外的点，然后返回处理后的点。例如，经过 orth 路由处理后，边的每一条链接线段都是水平或垂直的。
+      router: 'orth', // 路由方式: normal | orth | oneSide | manhattan | metro | er
+      // 连接器 connector 将路由 router 返回的点加工成渲染边所需要的 pathData。例如，rounded 连接器将连线之间的倒角处理为圆弧倒角。
       connector: {
-        name: 'rounded',
+        name: 'rounded', // 连接器: normal | rounded | smooth | jumpover
         args: {
           radius: 8,
         },
       },
       anchor: 'center',
       connectionPoint: 'anchor',
-      allowBlank: false,
+      allowBlank: false, // 是否允许连接到画布空白位置的点，默认为 true。
+      allowLoop: true, // 是否允许创建循环连线，即边的起始节点和终止节点为同一节点，默认为 true。
+      allowNode: true, // 是否允许边连接到节点（非节点上的连接桩），默认为 true。
+      allowEdge: true, // 是否允许边连接到另一个边，默认为 true。
+      allowPort: true, // 是否允许边连接到连接桩，默认为 true。
+      allowMulti: true, // 是否允许在相同的起始节点和终止之间创建多条边，默认为 true
       snap: {
         radius: 20,
       },
       createEdge() {
-        return new Shape.Edge({
+        // https://x6.antv.antgroup.com/tutorial/basic/edge#router
+        return this.createEdge({
+          shape: 'normal-edge',
           attrs: {
             line: {
-              stroke: '#A2B1C3',
-              strokeWidth: 2,
+              sourceMarker: {
+                name: 'block',
+                width: 0,
+                height: 0,
+                offset: 0,
+                visibility: 'hidden',
+              },
               targetMarker: {
                 name: 'block',
-                width: 12,
-                height: 8,
+                width: 15,
+                height: 10,
+                offset: 0,
+                visibility: 'visible',
               },
             },
           },
-          zIndex: 0,
         })
       },
-      validateConnection({ targetMagnet }) {
-        return !!targetMagnet
+      validateConnection({ sourceCell, targetCell, targetMagnet }) {
+        // 不能连接自身
+        if (sourceCell === targetCell) {
+          return false
+        }
+
+        // 不能重复连线
+        const edges = this.getEdges()
+        const portId = targetMagnet?.getAttribute('port')
+        if (edges.find(edge => edge.getTargetPortId() === portId)) {
+          return false
+        }
+
+        return true
       },
     },
+    async: true,
   })
 
   useGraph.setItem(graph)
 
-  _option.stencil instanceof HTMLElement && stencilPlugin(_option.stencil)
-  _option.minimap instanceof HTMLElement && miniMapPlugin(_option.minimap)
+  isHTMLElement(_option.stencil) && stencilPlugin(_option.stencil)
+  isHTMLElement(_option.minimap) && miniMapPlugin(_option.minimap)
 
-  if (isVueComponent(_option.contextmenu)) {
-    Channel.listener(NODE_CONTEXTMENU, _option.contextmenu.show)
-    Channel.listener(COMBO_CONTEXTMENU, _option.contextmenu.show)
-    Channel.listener(GRAPH_CONTEXTMENU, _option.contextmenu.show)
-    Channel.listener(HIDE_CONTEXTMENU, _option.contextmenu.hide)
+  if (isHTMLElement(_option.horizontal) && isHTMLElement(_option.vertical)) {
+    guidesPlugin({
+      horizontal: _option.horizontal,
+      vertical: _option.vertical,
+    })
   }
 
   plugins(graph)
   registerNode(graph)
+  registerEdge(graph)
   registerEvent(graph)
 
   return graph

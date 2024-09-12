@@ -136,7 +136,10 @@ export default {
 
   methods: {
     propertyChange(property, value) {
+      // TODO: 这里使用事务，当时从事件流程上好像没有什么用，后期再调整
+      this.graph.value.startBatch('properties-update')
       this.$emit('property-change', property, value)
+      this.graph.value.stopBatch('properties-update')
     },
   },
   computed: {

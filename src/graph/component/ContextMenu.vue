@@ -13,8 +13,8 @@
 import ContextMenu from '@/components/ContextMenu'
 import { Channel } from '../utils/transmit'
 import { downloadJSON } from '../utils/download'
-import { GraphContextMenuConfig, NodeContextmMenuConfig, ComboContextmMenuConfig } from '../types/emun_contentmenu_dispatch'
-import { SWITCH_CONTEXTMENU_TYPE, NODE_CONTEXTMENU, COMBO_CONTEXTMENU } from '../types/emun_contentmenu_dispatch'
+import { GraphContextMenuConfig, NodeContextmMenuConfig, ComboContextmMenuConfig, EdgeContextmMenuConfig } from '../types/emun_contentmenu_dispatch'
+import { SWITCH_CONTEXTMENU_TYPE, NODE_CONTEXTMENU, COMBO_CONTEXTMENU, EDGE_CONTEXTMENU, HIDE_CONTEXTMENU, GRAPH_CONTEXTMENU } from '../types/emun_contentmenu_dispatch'
 import { NODE_CLICK } from '../types/enum_base_event'
 import { useGraph } from '../store'
 import { exportData } from '../functions'
@@ -33,15 +33,24 @@ export default {
   },
 
   mounted() {
+    Channel.listener(NODE_CONTEXTMENU, this.show)
+    Channel.listener(COMBO_CONTEXTMENU, this.show)
+    Channel.listener(EDGE_CONTEXTMENU, this.show)
+    Channel.listener(GRAPH_CONTEXTMENU, this.show)
+    Channel.listener(HIDE_CONTEXTMENU, this.hide)
+
     Channel.listener(SWITCH_CONTEXTMENU_TYPE, this.switchData)
     Channel.listener(NODE_CONTEXTMENU, (_, node) => (this.contentmenuSelect = node))
-    Channel.listener(COMBO_CONTEXTMENU, (_, node) => (this.contentmenuSelect = node))
+    Channel.listener(COMBO_CONTEXTMENU, (_, combo) => (this.contentmenuSelect = combo))
+    Channel.listener(EDGE_CONTEXTMENU, (_, edge) => (this.contentmenuSelect = edge))
   },
 
   methods: {
     onSelect(item, _evt) {
       const { graph } = useGraph
       const node = this.contentmenuSelect
+
+      const edge = this.contentmenuSelect
 
       switch (item.label) {
         case '选中':
@@ -119,12 +128,23 @@ export default {
         case '导出':
           {
             const data = exportData()
+            console.log({ edges: data.edges, nodes: data.nodes })
             downloadJSON({ edges: data.edges, nodes: data.nodes })
           }
           break
 
         case '删除':
           graph.value.removeCell(node)
+          break
+
+        case '添加标签':
+          edge.appendLabel({
+            attrs: {
+              text: {
+                text: 'Hello Label',
+              },
+            },
+          })
           break
 
         default:
@@ -152,6 +172,10 @@ export default {
 
         case 'combo':
           this.items = ComboContextmMenuConfig
+          break
+
+        case 'edge':
+          this.items = EdgeContextmMenuConfig
           break
 
         default:

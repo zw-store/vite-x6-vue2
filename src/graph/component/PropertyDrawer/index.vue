@@ -18,6 +18,8 @@
         <SVGContorl v-if="nodeData && nodeType === 'svg-node'" v-bind="{ nodeData, form, popupper }" @property-change="propertyChange"></SVGContorl>
 
         <ComboContorl v-if="nodeData && nodeType === 'combo-node'" v-bind="{ nodeData, form, popupper }" @property-change="propertyChange"></ComboContorl>
+
+        <EdgeContorl v-if="nodeData && nodeType === 'edge-node'" v-bind="{ nodeData, form, popupper }" @property-change="propertyChange"></EdgeContorl>
       </el-form>
     </el-card>
   </el-drawer>
@@ -30,11 +32,13 @@ import { NODE_CLICK } from '../../types/enum_base_event'
 import NodeContorl from './plugins/NodeContorl'
 import SVGContorl from './plugins/SVGContorl'
 import ComboContorl from './plugins/ComboContorl'
-import { isEmpty } from '../../utils'
+import EdgeContorl from './plugins/EdgeContorl'
+import { isString, isEmpty } from '../../utils'
+import { useGraph } from '../../store'
 
 export default {
   name: 'PropertyDrawer',
-  components: { NodeContorl, SVGContorl, ComboContorl },
+  components: { NodeContorl, SVGContorl, ComboContorl, EdgeContorl },
   data() {
     return {
       visible: false,
@@ -50,6 +54,7 @@ export default {
   },
   provide: {
     owner: this,
+    graph: useGraph.graph,
   },
 
   mounted() {
@@ -58,7 +63,12 @@ export default {
 
     Channel.listener(NODE_CLICK, node => {
       this.nodeType = node.getProp('nodeType')
-      this.form = node.getAttrs()
+      this.form = {
+        ...node.getAttrs(),
+        router: node.getRouter(),
+        labels: node.getLabels(),
+      }
+
       this.nodeData = node
       this.visible = true
     })
@@ -72,108 +82,14 @@ export default {
     resetpopup() {
       this.$data.popupper = this.$options.data().popupper
     },
-    propertyChange(property, value) {
+    propertyChange(property = '', value) {
       if (isEmpty(this.nodeData)) return
+      if (!isString(property)) throw new Error('property must be a string')
 
-      switch (property) {
-        case 'label/text':
-          this.nodeData.attr('label/text', value)
-          break
+      const barbecue = property.replace(/\//g, '.')
 
-        case 'label/fontSize':
-          this.nodeData.attr('label/fontSize', value)
-          this.form.label.fontSize = value
-          this.resetpopup()
-          break
-
-        case 'label/fill':
-          this.nodeData.attr('label/fill', value)
-          this.form.label.fill = value
-          break
-
-        case 'label/fontFamily':
-          this.nodeData.attr('label/fontFamily', value)
-          this.form.label.fontFamily = value
-          break
-
-        case 'label/textAnchor':
-          this.nodeData.attr('label/textAnchor', value)
-          this.form.label.textAnchor = value
-          break
-
-        case 'label/textVerticalAnchor':
-          this.nodeData.attr('label/textVerticalAnchor', value)
-          this.form.label.textVerticalAnchor = value
-          break
-
-        case 'label/refX':
-          this.nodeData.attr('label/refX', value)
-          this.form.label.refX = value
-          break
-
-        case 'label/refY':
-          this.nodeData.attr('label/refY', value)
-          this.form.label.refY = value
-          break
-
-        case 'label/visibility':
-          this.nodeData.attr('label/visibility', value)
-          this.form.label.visibility = value
-          break
-
-        case 'body/fill':
-          this.nodeData.attr('body/fill', value)
-          this.form.body.fill = value
-          break
-
-        case 'body/stroke':
-          this.nodeData.attr('body/stroke', value)
-          this.form.body.stroke = value
-          break
-
-        case 'body/strokeWidth':
-          this.nodeData.attr('body/strokeWidth', value)
-          this.form.body.strokeWidth = value
-          this.resetpopup()
-          break
-
-        case 'body/visibility':
-          this.nodeData.attr('body/visibility', value)
-          this.form.body.visibility = value
-          this.resetpopup()
-          break
-
-        case 'svg/href':
-          this.nodeData.setAttrs({
-            'svg/href': value,
-            'svg/xlink:href': value,
-          })
-          this.form.svg.href = value
-          break
-
-        case 'svg/fill':
-          this.nodeData.attr('svg/fill', value)
-          this.form.svg.fill = value
-          break
-
-        case 'svg/refX':
-          this.nodeData.attr('svg/refX', value)
-          this.form.svg.refX = value
-          break
-
-        case 'svg/refY':
-          this.nodeData.attr('svg/refY', value)
-          this.form.svg.refY = value
-          break
-
-        case 'svg/visibility':
-          this.nodeData.attr('svg/visibility', value)
-          this.form.svg.visibility = value
-          break
-
-        default:
-          break
-      }
+      this.form[barbecue] = value
+      this.nodeData.attr(property, value)
     },
   },
 

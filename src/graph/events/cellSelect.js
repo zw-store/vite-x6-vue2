@@ -1,14 +1,18 @@
 import { CELL_CLICK } from '../types/enum_base_event'
 import { SELECTED, UN_SELECTED } from '../types/enum_selected_event'
 import { PROPERTIES_BUTTON, REMOVE_BUTTON } from '../types/enum_utilily'
+import { ORIGIN_STYLE_IN_SELECT } from '../types/enum_prop_properties'
 import { Channel } from '../utils/transmit'
+import { selectedStyle } from '../constant'
 
 export default graph => {
   graph.on('cell:selected', ({ cell }) => {
     let removeBtnConf
     let editBtnConf
+
     if (cell.isEdge()) {
-      cell.attr('line', { stroke: 'skyblue', strokeWidth: 3 })
+      cell.prop(ORIGIN_STYLE_IN_SELECT, cell.getAttrs().line)
+      cell.attr('line', selectedStyle.edgeSelected)
       removeBtnConf = { distance: '30%' }
       editBtnConf = { distance: '30%', offset: { x: -30 } }
     }
@@ -39,7 +43,9 @@ export default graph => {
 
   graph.on('cell:unselected', ({ cell }) => {
     if (cell.isEdge()) {
-      cell.attr('line', { stroke: '#7c68fc', strokeWidth: 2 })
+      const originStyleInSelect = cell.getProp(ORIGIN_STYLE_IN_SELECT)
+      cell.attr('line', originStyleInSelect, { overwrite: true })
+      cell.removeProp(ORIGIN_STYLE_IN_SELECT, { silent: true })
     } else {
       const cellView = graph.findView(cell)
       cellView && cellView.removeClass(`${cell.shape}-selected`)

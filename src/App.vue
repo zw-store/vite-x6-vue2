@@ -13,6 +13,9 @@
     <ContextMenu ref="contextmenu"> </ContextMenu>
 
     <div class="main">
+      <div ref="horizontal" style="position: absolute; insert: 0; z-index: 9999; height: 14px; width: 100%"></div>
+      <div ref="vertical" style="position: absolute; z-index: 9999; insert: 0; height: 100%; width: 14px"></div>
+
       <ToolBar></ToolBar>
 
       <div ref="graph-x6" class="graph-main-container" />
@@ -37,6 +40,8 @@ export default {
       stencil: this.$refs.stencil,
       minimap: this.$refs.minimap,
       contextmenu: this.$refs.contextmenu,
+      horizontal: this.$refs.horizontal,
+      vertical: this.$refs.vertical,
     })
     initDefaultData(
       [
@@ -311,19 +316,33 @@ export default {
       ],
       [
         {
-          shape: 'edge',
+          shape: 'normal-edge',
           attrs: {
             line: {
-              stroke: '#A2B1C3',
               targetMarker: {
                 name: 'block',
-                width: 12,
-                height: 8,
+                width: 15,
+                height: 10,
+                offset: 0,
+                visibility: 'visible',
+              },
+              sourceMarker: {
+                name: 'block',
+                width: 0,
+                height: 0,
+                offset: 0,
+                visibility: 'hidden',
               },
             },
           },
-          id: '135acc8c-696a-4fb7-bc7c-f2055e73976f',
-          zIndex: 0,
+          nodeType: 'edge-node',
+          router: {
+            name: 'orth',
+            args: {
+              padding: 10,
+            },
+          },
+          id: 'e5efa256-8e2f-45e5-8c4f-98a36ae0d2b8',
           source: {
             cell: 'dc1f1137-6224-497f-b9bb-c5f61e00277a',
             port: '454c2192-2549-4440-a4eb-59b305644590',
@@ -332,6 +351,33 @@ export default {
             cell: 'e169f372-ec61-43f1-8390-c769c2aecf84',
             port: '622e55be-3459-4d40-8bf5-f7fbeecdc118',
           },
+          zIndex: 3,
+          labels: [
+            {
+              attrs: {
+                text: {
+                  text: 'Hello Label',
+                  fill: '#000',
+                },
+              },
+              position: {
+                distance: 0.1,
+                offset: [0, 0],
+              },
+            },
+            {
+              attrs: {
+                text: {
+                  text: 'Hello Label2',
+                  fill: '#409033',
+                },
+              },
+              position: {
+                distance: 1,
+                offset: [0, 0],
+              },
+            },
+          ],
         },
       ],
     )

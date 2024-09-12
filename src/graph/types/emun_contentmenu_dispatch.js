@@ -141,3 +141,23 @@ export const ComboContextmMenuConfig = [
   { label: 'Add', icon: 'search', shortcut: `${ctrl}A` },
   { label: '导出', icon: 'export', shortcut: `${ctrl}P` },
 ]
+
+export const EdgeContextmMenuConfig = [
+  { label: '置顶', icon: 'arrow-top' },
+  { label: '置底', icon: 'arrow-bottom' },
+  { separator: true },
+  { label: '编辑', icon: 'edit' },
+  {
+    label: '箭头',
+    icon: 'arrow-right1',
+    items: [
+      { label: '箭头反向', icon: 'arrow-right' },
+      { label: '隐藏箭头', icon: 'hidden' },
+    ],
+  },
+  { label: '添加标签', icon: 'label' },
+  { separator: true },
+  { label: '删除', icon: 'delete', shortcut: `${ctrl}⌫` },
+  { separator: true },
+  { label: '导出', icon: 'export', shortcut: `${ctrl}P` },
+]
