@@ -1,36 +1,106 @@
-# This is a basic workflow to help you get started with Actions
+# 1 工作流名称
+name: Vite-X6-vue2
 
-name: CI
+# 2 工作流执行名称
+run-name: ${{ github.actor }} is update repo, start building...
 
-# Controls when the workflow will run
+# 3 触发器
 on:
-  # Triggers the workflow on push or pull request events but only for the "master" branch
+  # push 推送
   push:
-    branches: [ "master" ]
+    branches: ["master"]
+  # PR 合并提交
   pull_request:
-    branches: [ "master" ]
+    branches: ["master"]
 
-  # Allows you to run this workflow manually from the Actions tab
+  # 允许您从“操作”选项卡手动运行此工作流
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# 4 设置权限（文件是可以被读写修改的）
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# 工作合集
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  # 1) 初始化
+  setup:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      # 1 将代码仓库的内容拉取（或称为检出）到工作目录中，以便在下面的工作流程中使用
+      - name: checkout
+        uses: actions/checkout@v3
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      # 2 读取缓存 node_modules
+      - name: cache node_modules
+        id: node_modules_cache_id
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          # hashFiles 可以根据文件哈希创建 key 值，当文件依赖发生变化时，重新存储缓存
+          key: ${{ runner.os }}-${{ hashFiles('package.json') }}-node_modules
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+  # 2) 构建项目
+  build:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      # 1 将代码仓库的内容拉取（或称为检出）到工作目录中，以便在下面的工作流程中使用
+      - name: checkout
+        uses: actions/checkout@v3
+
+      # 2 安装 node 环境，并设置版本为 16（不装默认会最新版本）
+      - name: Setup Node.js (设置 node 版本)
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14.21.3
+
+      # 3 安装检索依赖
+      - name: Install dependencies (安装依赖)
+        run: npm install
+
+      # 4 如果变化重新设置缓存 node_modules
+      - name: restore cache from node_modules
+        id: node_modules_cache_id
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-${{ hashFiles('package.json') }}-node_modules
+
+      # 5 代码检查，无该命令所以不执行
+      # - name: lint (代码检查)
+      #   run: pnpm run lint
+
+      # 6 跑测试，无该命令所以不执行
+      # - name: Test (测试)
+      #   run: pnpm run test
+
+      # 7 构建项目
+      - name: Build (构建)
+        run: npm run build
+
+      # 8 上传构建产物（actions/upload-artifact@v3 会上传工作流程中的文件，允许您在作业之间共享数据并在工作流程完成后存储数据）
+      - name: Upload build artifacts (上传构建产物)
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: "./dist"
+
+  # 3) 部署项目
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      # 1.1 部署 GitHub Pages
+      # - name: Deploy to GitHub Pages(部署到 GitHub Pages)
+      #   uses: actions/deploy-pages@v2
+      #   with:
+      #     token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 1.2 部署到 gh-pages分支
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          force_orphan: true
