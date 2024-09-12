@@ -34,7 +34,12 @@ export function fmtLabelOverflow(label) {
 }
 
 export const verifyElementParams = opts => {
-  const _option = {}
+  const _option = {
+    el: null,
+    stencil: null,
+    minimap: null,
+    contextmenu: null,
+  }
 
   if (!opts) {
     throw new Error('options params is required')
@@ -45,19 +50,26 @@ export const verifyElementParams = opts => {
   }
 
   if (opts instanceof HTMLElement) {
-    _option.el = opts
+    return { el: opts }
   }
 
-  if (isObject(opts) && opts.el instanceof HTMLElement) {
-    _option.el = opts.el
-    _option.stencil = opts.stencil
-    _option.minimap = opts.minimap
-    _option.contextmenu = opts.contextmenu
-  }
-
-  return _option
+  return Object.assign(_option, opts)
 }
 
 export function isVueComponent(component) {
   return typeof component === 'object' && component !== null && component._isVue === true
+}
+
+export function isHTMLElement(element) {
+  return typeof element === 'object' && element !== null && element.nodeType === 1
+}
+
+/**
+ * 用于属性修改时保存原始键值对
+ * 将 cellB 的有的属性，按 key 从 cellA 中取出。
+ */
+export function getOverrideOriginKeys(cellA, cellB) {
+  return Object.keys(cellA)
+    .filter(key => cellB[key])
+    .reduce((acc, prev) => ((acc[prev] = cellA[prev]), acc), {})
 }
