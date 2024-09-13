@@ -65,8 +65,8 @@ export default {
       this.nodeType = node.getProp('nodeType')
       this.form = {
         ...node.getAttrs(),
-        router: node?.getRouter(),
-        labels: node?.getLabels(),
+        router: node.getRouter instanceof Function ? node.getRouter() : {},
+        labels: node.getLabels instanceof Function ? node.getLabels() : {},
       }
 
       this.nodeData = node

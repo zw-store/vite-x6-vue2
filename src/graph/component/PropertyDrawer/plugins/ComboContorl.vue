@@ -122,7 +122,7 @@ export default {
     popupper: { type: Object, required: true },
   },
   model: { prop: 'popupper', event: 'input' },
-  inject: ['owner'],
+  inject: ['owner', 'graph'],
   data() {
     return {
       NodeStyle: PreStyle.node,
