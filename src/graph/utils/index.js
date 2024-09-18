@@ -1,4 +1,4 @@
-export { isArray, isEmpty, isNil, isObject, isString } from 'lodash-es'
+export { isArray, isEmpty, isNil, isObject, isString, cloneDeep } from 'lodash-es'
 
 export const raf = fn => requestAnimationFrame.call(window, fn)
 export const doubleRaf = fn => raf(() => raf(fn))

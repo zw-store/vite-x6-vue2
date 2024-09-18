@@ -33,7 +33,7 @@ import NodeContorl from './plugins/NodeContorl'
 import SVGContorl from './plugins/SVGContorl'
 import ComboContorl from './plugins/ComboContorl'
 import EdgeContorl from './plugins/EdgeContorl'
-import { isString, isEmpty } from '../../utils'
+import { isString, isEmpty, cloneDeep } from '../../utils'
 import { useGraph } from '../../store'
 
 export default {
@@ -63,12 +63,14 @@ export default {
 
     Channel.listener(NODE_CLICK, node => {
       this.nodeType = node.getProp('nodeType')
-      this.form = {
+
+      const formData = {
         ...node.getAttrs(),
         router: node.getRouter instanceof Function ? node.getRouter() : {},
         labels: node.getLabels instanceof Function ? node.getLabels() : {},
       }
 
+      this.form = cloneDeep(formData)
       this.nodeData = node
       this.visible = true
     })

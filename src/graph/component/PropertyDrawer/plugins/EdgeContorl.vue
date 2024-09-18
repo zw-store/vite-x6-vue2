@@ -154,7 +154,7 @@
 import { FontSize, PredefineColors, FontFamily, PreStyle, StrokeWidth } from '../constant'
 import { ORIGIN_STYLE_IN_SELECT } from '../../../types/enum_prop_properties'
 import { transformInput } from '../../../utils/legacy'
-import { util } from 'zrender'
+import { cloneDeep } from '../../../utils'
 
 export default {
   name: 'EdgeContorl',
@@ -199,10 +199,10 @@ export default {
       this.graph.value.stopBatch('properties-update')
     },
     propertyLabelChange(index, property, value) {
-      const originLabel = this.nodeData.getLabelAt(index)
-      const label = util.merge(originLabel, transformInput(property, value), true)
+      // https://github.com/antvis/X6/issues/4440
+      const originLabel = cloneDeep(this.nodeData.getLabelAt(index))
+      const label = Object.assign(originLabel, transformInput(property, value))
       this.nodeData.setLabelAt(index, label)
-      console.log(this.nodeData.getLabelAt(index))
     },
     routerChange(property, value) {
       const barbecue = property.replace(/\//g, '.')
