@@ -47,6 +47,7 @@ element-ui
   - [x] selection
   - [x] snapline
   - [x] transform
+  - [x] guides（标尺）
 
 - [x] 节点类型
   - [x] svg 节点
