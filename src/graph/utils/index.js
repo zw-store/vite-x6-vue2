@@ -79,3 +79,17 @@ export const returnSVGResource = (modules, regex = /(?<=svg\/)(.*)(?=\.svg)/) =>
     console.error('Error importing SVG resources:', error)
   }
 }
+
+export const throttleCache = (key, fn) => {
+  const interval = 1000
+  const cache = throttleCache.cache || (throttleCache.cache = {})
+
+  const now = Date.now()
+  const cachedEntry = cache[key]
+
+  if (!cachedEntry || now - cachedEntry.timer > interval) {
+    cache[key] = { value: fn(), timer: now }
+  }
+
+  return cache[key].value
+}

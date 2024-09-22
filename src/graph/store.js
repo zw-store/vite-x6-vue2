@@ -5,6 +5,8 @@ const state = reactive({
   stencil: null,
   minimap: null,
   dnd: null,
+  guidesX: null,
+  guidesY: null,
 })
 
 class UseGraph {
@@ -47,7 +49,20 @@ class UseDnd {
   }
 }
 
+class UseGuides {
+  constructor() {
+    this.guidesX = computed(() => state.guidesX)
+    this.guidesY = computed(() => state.guidesY)
+  }
+
+  setItem({ guidesX, guidesY }) {
+    state.guidesX = guidesX
+    state.guidesY = guidesY
+  }
+}
+
 export const useGraph = new UseGraph()
 export const useStencil = new UseStencil()
 export const useMiniMap = new UseMiniMap()
 export const useDnd = new UseDnd()
+export const useGuides = new UseGuides()

@@ -5,6 +5,7 @@ import contextmenu from './contextmenu'
 import drawer from './drawer'
 import KeyTrigger from './keyboard'
 import comboEvent from './combo'
+import graphGuides from './graphGuides'
 // import connectEdge from './connectEdge'
 
 // 统一注册 事件系统
@@ -17,4 +18,5 @@ export default function (graph) {
   contextmenu(graph)
   KeyTrigger(graph)
   comboEvent(graph)
+  graphGuides(graph)
 }

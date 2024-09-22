@@ -1,38 +1,37 @@
 import Guides from '@scena/guides'
+import { useGuides } from '../store'
 
 export default ({ horizontal, vertical }) => {
+  // https://daybrush.com/guides/release/latest/doc/Guides.html#.event:dragStart
   const config = {
-    direction: 'start', // 标尺的位置，默认是end
-    backgroundColor: 'transparent', // ruler 的背景色
-    textColor: '#333', // 刻度文字的颜色
-    textOffset: [-2, 0], // 刻度文字的偏移值
+    backgroundColor: '#3e4e5b', // guides 背景色
+    direction: 'end', // 文字显示方向
+    textColor: '#fff', // 刻度文字的颜色
+    textOffset: [0, 0], // 文字偏移方向
+    lineColor: '#999', // 刻度线的颜色
     displayDragPos: true, // 拖拽线的时候是否实时显示坐标位置
     unit: 100, // 刻度的间隔值，默认50
-    segment: 1,
+    segment: 10, // 刻度线段数，默认5
     guideStyle: { background: '#18a058' }, // guide 拖动结束后线的颜色，配合dragGuideStyle使用
     dragGuideStyle: { background: '#18a058' }, // guide 拖动中线的颜色 配合guideStyle使用
     guidePosStyle: { color: '#18a058' }, // 实时显示坐标的样式
-    negativeRuler: false, // 是否以负方向显示标尺。
+    negativeRuler: true, // 是否以负方向显示标尺。
+    useResizeObserver: true, // 使用resizeObserver来监听容器大小变化
+    snaps: Array.from({ length: 1001 }, (_, i) => (i - 500) * 10), // 取-5000 ~ 5000吸附点
+    guidesOffset: -30, // 偏移到和画布坐标一致
   }
 
-  // https://daybrush.com/guides/release/latest/doc/Guides.html#.event:dragStart
   const guidesX = new Guides(horizontal, {
     ...config,
     type: 'horizontal',
-    textOffset: [0, -18],
-    guidesOffset: -14,
-  }).on('changeGuides', e => {
-    // eyeDisabled.value = e.guides.length == 0
   })
 
   const guidesY = new Guides(vertical, {
     ...config,
     type: 'vertical',
-    textOffset: [-18, 0],
-    guidesOffset: -14,
-  }).on('changeGuides', e => {
-    // eyeDisabled.value = e.guides.length == 0
   })
+
+  useGuides.setItem({ guidesX, guidesY })
 
   window.addEventListener('resize', () => {
     guidesY.resize()

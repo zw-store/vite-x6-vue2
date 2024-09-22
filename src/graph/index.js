@@ -6,7 +6,6 @@ import registerNode from './shape'
 import registerEdge from './edge'
 import { useGraph } from './store'
 import { isHTMLElement, verifyElementParams } from './utils/legacy'
-import { opacity } from '@antv/x6/lib/registry/highlighter/opacity'
 
 export function initGraph(opts) {
   const _option = verifyElementParams(opts)
@@ -14,6 +13,7 @@ export function initGraph(opts) {
   const graph = new Graph({
     container: _option.el,
     autoResize: true,
+    // panning: true,
     preventDefaultContextMenu: true,
     preventDefaultBlankAction: false,
     // https://x6.antv.antgroup.com/api/graph/grid

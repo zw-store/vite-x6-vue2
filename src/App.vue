@@ -13,10 +13,11 @@
     <ContextMenu ref="contextmenu"> </ContextMenu>
 
     <div class="main">
-      <div ref="horizontal" style="position: absolute; insert: 0; z-index: 9999; height: 14px; width: 100%"></div>
-      <div ref="vertical" style="position: absolute; z-index: 9999; insert: 0; height: 100%; width: 14px"></div>
+      <div ref="horizontal" style="position: absolute; insert: 0; z-index: 1; height: 30px; width: 100%"></div>
+      <div ref="vertical" style="position: absolute; z-index: 1; insert: 0; height: 100%; width: 30px"></div>
+      <div style="width: 30px; height: 30px; position: absolute; z-index: 1; background: #3e4e5b; top: 0; left: 0"></div>
 
-      <ToolBar></ToolBar>
+      <!-- <ToolBar></ToolBar> -->
 
       <div ref="graph-x6" class="graph-main-container" />
 
