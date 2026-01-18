@@ -41,11 +41,11 @@
       <el-descriptions-item :span="2">
         <el-form-item label="字体位置" class="my-0">
           <div class="float-right text-center">
-            <svg-icon class-name="color-picker ml-1 cursor-pointer" :class="{ active: form.label.textAnchor === 'start' }" icon-class="arrow-right" @click.native="propertyChange('label/textAnchor', 'start')"></svg-icon>
-            <svg-icon class-name="color-picker ml-1 cursor-pointer" :class="{ active: form.label.textAnchor === 'end' }" icon-class="arrow-left" @click.native="propertyChange('label/textAnchor', 'end')"></svg-icon>
-            <svg-icon class-name="color-picker ml-1 cursor-pointer" :class="{ active: form.label.textAnchor === 'middle' }" icon-class="arrow-middle" @click.native="propertyChange('label/textAnchor', 'middle'), propertyChange('label/textVerticalAnchor', 'middle')"></svg-icon>
-            <svg-icon class-name="color-picker ml-1 cursor-pointer" :class="{ active: form.label.textVerticalAnchor === 'top' }" icon-class="arrow-top" @click.native="propertyChange('label/textVerticalAnchor', 'top')"></svg-icon>
-            <svg-icon class-name="color-picker ml-1 cursor-pointer" :class="{ active: form.label.textVerticalAnchor === 'bottom' }" icon-class="arrow-bottom" @click.native="propertyChange('label/textVerticalAnchor', 'bottom')"></svg-icon>
+            <svg-icon class-name="color-picker ml-1 cursor-pointer" :class="{ active: form.label.textAnchor === 'start' }" icon-class="arrow-right" @click="propertyChange('label/textAnchor', 'start')"></svg-icon>
+            <svg-icon class-name="color-picker ml-1 cursor-pointer" :class="{ active: form.label.textAnchor === 'end' }" icon-class="arrow-left" @click="propertyChange('label/textAnchor', 'end')"></svg-icon>
+            <svg-icon class-name="color-picker ml-1 cursor-pointer" :class="{ active: form.label.textAnchor === 'middle' }" icon-class="arrow-middle" @click="(propertyChange('label/textAnchor', 'middle'), propertyChange('label/textVerticalAnchor', 'middle'))"></svg-icon>
+            <svg-icon class-name="color-picker ml-1 cursor-pointer" :class="{ active: form.label.textVerticalAnchor === 'top' }" icon-class="arrow-top" @click="propertyChange('label/textVerticalAnchor', 'top')"></svg-icon>
+            <svg-icon class-name="color-picker ml-1 cursor-pointer" :class="{ active: form.label.textVerticalAnchor === 'bottom' }" icon-class="arrow-bottom" @click="propertyChange('label/textVerticalAnchor', 'bottom')"></svg-icon>
           </div>
         </el-form-item>
       </el-descriptions-item>
@@ -146,7 +146,7 @@
       <template v-for="(item, index) in NodeStyle">
         <el-descriptions-item :key="index" contentClassName="mx-4">
           <el-tooltip :content="item.fill" placement="left-end">
-            <div class="w-12 h-5 cursor-pointer" :style="{ backgroundColor: item.fill, 'border-color': item.stroke }" @click="propertyChange('body/fill', item.fill), propertyChange('body/stroke', item.stroke), propertyChange('label/fill', item.textFill), propertyChange('body/strokeWidth', item.strokeWidth)"></div>
+            <div class="w-12 h-5 cursor-pointer" :style="{ backgroundColor: item.fill, 'border-color': item.stroke }" @click="(propertyChange('body/fill', item.fill), propertyChange('body/stroke', item.stroke), propertyChange('label/fill', item.textFill), propertyChange('body/strokeWidth', item.strokeWidth))"></div>
           </el-tooltip>
         </el-descriptions-item>
       </template>

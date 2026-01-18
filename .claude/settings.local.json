@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run serve:*)",
+      "Bash(cat:*)",
+      "Bash(npx vue-demi-fix)",
+      "Bash(pnpm install)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(node ./scripts/postinstall.js:*)",
+      "Bash(node:*)",
+      "Bash(npx eslint:*)"
+    ]
+  }
+}
