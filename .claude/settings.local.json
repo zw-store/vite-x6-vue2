@@ -8,7 +8,19 @@
       "Bash(pnpm approve-builds:*)",
       "Bash(node ./scripts/postinstall.js:*)",
       "Bash(node:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(git checkout:*)",
+      "WebSearch",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:daybrush.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:jsfiddle.net)",
+      "WebFetch(domain:codepen.io)",
+      "Bash(npm install:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(npm info:*)",
+      "Bash(npm run prettier:*)"
     ]
   }
 }
