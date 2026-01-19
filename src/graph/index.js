@@ -1,7 +1,6 @@
 import { Graph } from '@antv/x6'
 import registerEvent from './events'
 import { miniMapPlugin, plugins, stencilPlugin } from './plugin'
-import guidesPlugin from './plugin/guides'
 import registerNode from './shape'
 import registerEdge from './edge'
 import { useGraph } from './store'
@@ -184,13 +183,6 @@ export function initGraph(opts) {
 
   isHTMLElement(_option.stencil) && stencilPlugin(_option.stencil)
   isHTMLElement(_option.minimap) && miniMapPlugin(_option.minimap)
-
-  if (isHTMLElement(_option.horizontal) && isHTMLElement(_option.vertical)) {
-    guidesPlugin({
-      horizontal: _option.horizontal,
-      vertical: _option.vertical,
-    })
-  }
 
   plugins(graph)
   registerNode(graph)

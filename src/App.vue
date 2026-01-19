@@ -13,13 +13,11 @@
     <ContextMenu ref="contextmenu"> </ContextMenu>
 
     <div class="main">
-      <div ref="horizontal" style="position: absolute; insert: 0; z-index: 1; height: 30px; width: 100%"></div>
-      <div ref="vertical" style="position: absolute; z-index: 1; insert: 0; height: 100%; width: 30px"></div>
-      <div style="width: 30px; height: 30px; position: absolute; z-index: 1; background: #3e4e5b; top: 0; left: 0"></div>
-
-      <!-- <ToolBar></ToolBar> -->
-
+      <!-- 画布容器 -->
       <div ref="graph-x6" class="graph-main-container" />
+
+      <!-- 标尺组件 - 使用绝对定位覆盖在画布上方 -->
+      <SketchRuler :scale="rulerState.scale" :startX="rulerState.startX" :startY="rulerState.startY" :canvasWidth="rulerState.canvasWidth" :canvasHeight="rulerState.canvasHeight" :lines.sync="rulerState.lines" :thick="30" />
 
       <div class="graph-area-map-panel">
         <div ref="minimap"></div>
@@ -31,18 +29,23 @@
 <script>
 import { initGraph, initDefaultData } from '@/graph'
 import { ContextMenu, ToolBar, PropertyDrawer } from '@/graph/component'
+import SketchRuler from '@/graph/component/SketchRuler.vue'
+import { useRuler } from '@/graph/store'
 
 export default {
   name: 'x6',
-  components: { ToolBar, PropertyDrawer, ContextMenu },
+  components: { ToolBar, PropertyDrawer, ContextMenu, SketchRuler },
+  computed: {
+    rulerState() {
+      return useRuler.rulerState.value
+    },
+  },
   mounted() {
     initGraph({
       el: this.$refs['graph-x6'],
       stencil: this.$refs.stencil,
       minimap: this.$refs.minimap,
       contextmenu: this.$refs.contextmenu,
-      horizontal: this.$refs.horizontal,
-      vertical: this.$refs.vertical,
     })
     initDefaultData(
       [

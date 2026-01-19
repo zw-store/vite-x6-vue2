@@ -5,8 +5,18 @@ const state = reactive({
   stencil: null,
   minimap: null,
   dnd: null,
-  guidesX: null,
-  guidesY: null,
+  // 标尺状态
+  rulerState: {
+    scale: 1,
+    startX: 0,
+    startY: 0,
+    lines: {
+      h: [],
+      v: [],
+    },
+    canvasWidth: 1920,
+    canvasHeight: 1080,
+  },
 })
 
 class UseGraph {
@@ -49,15 +59,27 @@ class UseDnd {
   }
 }
 
-class UseGuides {
+class UseRuler {
   constructor() {
-    this.guidesX = computed(() => state.guidesX)
-    this.guidesY = computed(() => state.guidesY)
+    this.rulerState = computed(() => state.rulerState)
   }
 
-  setItem({ guidesX, guidesY }) {
-    state.guidesX = guidesX
-    state.guidesY = guidesY
+  updateScale(scale) {
+    state.rulerState.scale = scale
+  }
+
+  updateScroll(startX, startY) {
+    state.rulerState.startX = startX
+    state.rulerState.startY = startY
+  }
+
+  updateLines(lines) {
+    state.rulerState.lines = lines
+  }
+
+  updateCanvasSize(width, height) {
+    state.rulerState.canvasWidth = width
+    state.rulerState.canvasHeight = height
   }
 }
 
@@ -65,4 +87,4 @@ export const useGraph = new UseGraph()
 export const useStencil = new UseStencil()
 export const useMiniMap = new UseMiniMap()
 export const useDnd = new UseDnd()
-export const useGuides = new UseGuides()
+export const useRuler = new UseRuler()

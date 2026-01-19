@@ -26,7 +26,6 @@
     "@antv/x6-plugin-stencil": "^2.1.5",
     "@antv/x6-plugin-transform": "^2.1.8",
     "@antv/x6-vue-shape": "^2.1.2",
-    "@scena/guides": "^0.29.2",
     "animate.css": "^4.1.1",
     "dayjs": "^1.11.13",
     "element-ui": "^2.15.14",
@@ -34,6 +33,7 @@
     "lodash-es": "^4.17.21",
     "mockjs": "^1.1.0",
     "vue": "^2.7.16",
+    "vue-sketch-ruler": "1.0.3",
     "zrender": "^5.6.0"
   },
   "devDependencies": {
